@@ -1,0 +1,16 @@
+CREATE TABLE users (
+  id BINARY(16) PRIMARY KEY,
+  username VARCHAR(50) NOT NULL,
+  passwd VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE,
+  description VARCHAR(255) DEFAULT ""
+);
+
+CREATE TABLE logins (
+  id BINARY(16) PRIMARY KEY,
+  user_id BINARY(16),
+  ip VARCHAR(20) NOT NULL,
+  device VARCHAR(255) NOT NULL,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+  CONSTRAINT fk_user_login FOREIGN KEY (user_id) REFERENCES users (id)
+);

@@ -1,0 +1,57 @@
+import crypto from "node:crypto";
+import mysql from "mysql2/promise";
+import bcrypt from "bcrypt";
+
+import { UUIDParser } from "../utils/uuidParser.js";
+
+import {
+  DB,
+  DB_HOST,
+  DB_PASSWD,
+  DB_PORT,
+  DB_USER,
+  SALT,
+  USER_DESCRIPTION,
+  USER_EMAIL,
+  USER_PASSWD,
+  USERNAME,
+} from "../config.js";
+
+export async function createDBConection() {
+  return await mysql.createConnection({
+    host: DB_HOST,
+    port: DB_PORT,
+    user: DB_USER,
+    password: DB_PASSWD,
+    database: DB,
+  });
+}
+
+export async function InitDB() {
+  // Obtenemos una conección
+  const con = await createDBConection();
+
+  // Consultamos la tabla de usuarios
+  const [result] = await con.query("SELECT * FROM users");
+
+  // Si la tabla está vacía tenemos que meter un usuario por defecto
+  // En caso de que haya registros salimos de la función
+  if (result.length > 0) {
+    return;
+  }
+
+  // Metemos el usuario nuevo usando una sentencia preparada
+  const [queryResult] = await con.execute(
+    "INSERT INTO users VALUES (?, ?, ?, ?, ?)",
+    [
+      UUIDParser.UUIDToBin(crypto.randomUUID()),
+      USERNAME,
+      bcrypt.hashSync(USER_PASSWD, Number(SALT)),
+      USER_EMAIL,
+      USER_DESCRIPTION,
+    ]
+  );
+
+  console.log("[+] Default API user created");
+
+}
