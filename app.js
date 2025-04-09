@@ -1,9 +1,8 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 
-import { PORT, INT, MAIN_URI } from "./config.js";
-import { AccountRouter } from "./routes/accountRouter.js";
-import { v1Router } from "./routes/v1Router.js";
+import { apiRouter } from "./routes/apiRouter.js";
+import { PORT, INT } from "./config.js";
 
 // Middlewares
 import { jwt } from "./middlewares/jwt.js";
@@ -15,19 +14,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(jwt);
 
-app.use((req,res, next) => {
-  console.log(req.originalUrl, req.method);
-
-  next();
-});
-
-app.get("/api", (_, res) => {
-  res.redirect(MAIN_URI);
-});
-
-app.use("/api/account", AccountRouter);
-
-app.use("/api/v1", v1Router);
+app.use("/api", apiRouter);
 
 app.listen(PORT, INT, () => {
   console.log("Server listening on ", INT, PORT);

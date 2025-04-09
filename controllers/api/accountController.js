@@ -1,6 +1,6 @@
-import { JWT } from "../jwt/jwt.js";
-import { AccountMySQL } from "../models/accountMySQL.js";
-import { AccountValidator } from "../validators/accountValidator.js";
+import { JWT } from "../../jwt/jwt.js";
+import { AccountMySQL } from "../../models/accountMySQL.js";
+import { AccountValidator } from "../../validators/accountValidator.js";
 
 export class AccountController {
   static async login(req, res) {

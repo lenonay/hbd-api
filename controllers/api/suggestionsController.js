@@ -1,4 +1,4 @@
-import { SuggestionsMySQL } from "../models/suggestionsMySQL.js";
+import { SuggestionsMySQL } from "../../models/suggestionsMySQL.js";
 
 export class SuggestionsController {
   static async GetAll(req, res) {

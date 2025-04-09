@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { WpPostsController } from "../controllers/wpPostsController.js";
+import { WpPostsController } from "../../../controllers/api/wordpress/wpPostsController.js";
 
 export const WpPostsRouter = Router();
 
