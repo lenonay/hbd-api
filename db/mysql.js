@@ -11,9 +11,12 @@ import {
   DB_PORT,
   DB_USER,
   SALT,
+  USER_BIRTHDATE,
+  USER_DEPT,
   USER_DESCRIPTION,
   USER_EMAIL,
   USER_PASSWD,
+  USER_SURNAME,
   USERNAME,
 } from "../config.js";
 
@@ -42,16 +45,19 @@ export async function InitDB() {
 
   // Metemos el usuario nuevo usando una sentencia preparada
   const [queryResult] = await con.execute(
-    "INSERT INTO users VALUES (?, ?, ?, ?, ?)",
+    "INSERT INTO users(id, username, surname, email, passwd, department, description, rol, birthdate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     [
       UUIDParser.UUIDToBin(crypto.randomUUID()),
       USERNAME,
-      bcrypt.hashSync(USER_PASSWD, Number(SALT)),
+      USER_SURNAME,
       USER_EMAIL,
+      bcrypt.hashSync(USER_PASSWD, Number(SALT)),
+      USER_DEPT,
       USER_DESCRIPTION,
+      "admin",
+      USER_BIRTHDATE
     ]
   );
 
   console.log("[+] Default API user created");
-
 }

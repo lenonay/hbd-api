@@ -14,9 +14,12 @@ export const {
   DB_PASSWD,
   DB,
   USERNAME,
+  USER_SURNAME,
   USER_EMAIL,
   USER_PASSWD,
+  USER_DEPT,
   USER_DESCRIPTION,
+  USER_BIRTHDATE,
   JWT_SECRET,
   API_KEY,
 } = process.env;

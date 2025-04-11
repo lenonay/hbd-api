@@ -9,7 +9,7 @@ export class AccountController {
 
     // Si no cumple con los requisitos enviamos un error y un 400
     if (!validate.success) {
-      res.status(400).json({success: false, error: validate.errors[0]});
+      res.status(200).json({ success: false, error: validate.errors[0] });
       return;
     }
 
@@ -21,7 +21,7 @@ export class AccountController {
 
     // Si no es valido el usuario enviamos el error
     if (!checkAccount.success) {
-      res.status(400).json(checkAccount);
+      res.status(200).json(checkAccount);
       return;
     }
 
@@ -33,13 +33,18 @@ export class AccountController {
       .cookie("token", token, {
         httpOnly: true,
         secure: true,
-        path: "/api",
-        maxAge: 1000 * 60 * 60 * 1, // 1 hora
+        path: "/",
+        maxAge: 1000 * 60 * 60 * 2, // 1 hora
       })
       .json({
         success: true,
         data: checkAccount.data,
         token,
       });
+  }
+
+  static async logout(_, res) {
+    // Borramos la cookie y listo
+    res.status(200).clearCookie("token").end();
   }
 }

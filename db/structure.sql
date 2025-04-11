@@ -1,9 +1,15 @@
 CREATE TABLE users (
   id BINARY(16) PRIMARY KEY,
   username VARCHAR(50) NOT NULL,
-  passwd VARCHAR(255) NOT NULL,
+  surname VARCHAR(150) NOT NULL,
   email VARCHAR(255) UNIQUE,
-  description VARCHAR(255) DEFAULT ""
+  passwd VARCHAR(255) NOT NULL,
+  department VARCHAR(100) NOT NULL,
+  description VARCHAR(255) NOT NULL DEFAULT "",
+  rol VARCHAR(255) NOT NULL DEFAULT "user",
+  birthdate DATE NOT NULL,
+  active BIT NOT NULL DEFAULT 1,
+  creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
 );
 
 CREATE TABLE logins (

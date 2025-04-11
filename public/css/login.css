@@ -1,0 +1,107 @@
+:root {
+  --bg: #fffded;
+  --primary: #d4a373;
+  --primary-acc: #faedcd;
+  --secondary: #ccd5ae;
+  --secondary-acc: #e9edc9;
+  --shadow-b: #00000030;
+  --alert: #b01e1e;
+}
+
+@font-face {
+  font-family: Cuprum;
+  src: url("../fonts/cuprum.ttf");
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Cuprum;
+}
+
+body {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+main {
+  background: var(--primary-acc);
+  box-shadow: 0 0 5px 1px var(--shadow-b);
+  border-radius: 15px;
+  padding: 15px;
+  /* padding-right: 30px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  width: fit-content;
+  transition: all 300ms ease;
+  
+  & img {
+    max-width: 180px;
+    filter: drop-shadow(0 0 5px var(--shadow-b));
+  }
+}
+
+.loginForm {
+  box-shadow: 0 0 5px 1px var(--shadow-b);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 10px;
+  width: fit-content;
+  transition: all 300ms ease;
+  max-width: 180px;
+
+  & h1 {
+    font-size: 22px;
+  }
+
+  & input {
+    background: var(--bg);
+    padding: 5px 10px;
+    border-radius: 8px 8px 2px 2px;
+    border: none;
+    border-bottom: 1.5px solid var(--primary);
+    caret-color: var(--primary);
+    outline: none;
+    transition: all 300ms ease;
+    
+    &.error {
+      caret-color: var(--alert);
+      border-bottom: 1.8px solid var(--alert);
+      color: var(--alert);
+    }
+  }
+
+  & button {
+    border: none;
+    background: var(--primary);
+    font-size: 24;
+    padding: 8px 12px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px 1px var(--shadow-b);
+    cursor: pointer;
+  }
+
+  & .error_display {
+    font-style: italic;
+    text-align: center;
+    color: var(--alert);
+    opacity: 0;
+    transition: all 300ms ease;
+
+    &.active {
+      opacity: 1;
+    }
+  }
+}
