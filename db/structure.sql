@@ -8,7 +8,7 @@ CREATE TABLE users (
   description VARCHAR(255) NOT NULL DEFAULT "",
   rol VARCHAR(255) NOT NULL DEFAULT "user",
   birthdate DATE NOT NULL,
-  active BIT NOT NULL DEFAULT 1,
+  active TINYINT NOT NULL DEFAULT 1,
   creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
 );
 

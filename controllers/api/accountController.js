@@ -1,6 +1,9 @@
+import crypto from "node:crypto";
+
 import { JWT } from "../../jwt/jwt.js";
 import { AccountMySQL } from "../../models/accountMySQL.js";
 import { AccountValidator } from "../../validators/accountValidator.js";
+import { UUIDParser } from "../../utils/uuidParser.js";
 
 export class AccountController {
   static async login(req, res) {
@@ -46,5 +49,56 @@ export class AccountController {
   static async logout(_, res) {
     // Borramos la cookie y listo
     res.status(200).clearCookie("token").end();
+  }
+
+  static async create(req, res) {
+    // Validamos el contenido
+    const validate = AccountValidator.validateFull(req.body);
+    
+
+    // Si tiene errores delvolvemos el estado
+    if (!validate.success) {
+      res
+        .status(200)
+        .json({ success: validate.success, error: validate.errors[0] });
+      return;
+    }
+
+    // 1. Validamos que el email no este ya registrado
+    const emailValidate = await AccountMySQL.verifyEmail(req.body.email);
+
+    // Si el email ya está en uso, enviamos el error
+    if (!emailValidate.success) {
+      res.send(emailValidate);
+      return;
+    }
+
+    // 2. Preparamos los campos de la sentencia SQL
+    const {
+      username,
+      surname,
+      email,
+      passwd,
+      department,
+      description = "",
+      rol = "user",
+      birthdate,
+    } = req.body;
+
+    const params = [
+      UUIDParser.UUIDToBin(crypto.randomUUID()),
+      username,
+      surname,
+      email,
+      passwd,
+      department,
+      description,
+      rol,
+      birthdate
+    ];
+    // 3. Lo metemos en la base de datos.
+    const validation = await AccountMySQL.createAccount(params);
+
+    res.send(validation);
   }
 }
