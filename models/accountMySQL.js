@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import { createDBConection } from "../db/mysql.js";
 import { UUIDParser } from "../utils/uuidParser.js";
 
+import { SALT } from "../config.js";
+
 export class AccountMySQL {
   static async getAccountData(email, passwd) {
     // Nos conectamos a la DB
@@ -75,6 +77,114 @@ export class AccountMySQL {
     } catch (error) {
       // 3. devolvemos resultado y manejamos el error
       return { success: false, error: "No se ha podido crear el usuario" };
+    }
+  }
+
+  static async getAll() {
+    const con = await createDBConection();
+    try {
+      // const [results] = await con.query("SELECT * FROM users");
+      const [[deptsRows], [userRows]] = await Promise.all([
+        con.query("SELECT DISTINCT department FROM users"),
+        con.query(
+          "SELECT id, username, surname, email, department, description ,rol, active FROM users ORDER BY username, surname, email"
+        ),
+      ]);
+
+      // Extraemos todos los departamentos unicos
+      const depts = deptsRows.map((row) => row.department).sort();
+
+      // Extraemos los datos de los usuarios
+      const data = userRows.map((row) => ({
+        ...row,
+        id: UUIDParser.binToUUID(row.id),
+        active: row.active === 1 ? true : false, // Cambiamos el valor binario a booleano
+      }));
+
+      return { depts, data };
+    } finally {
+      // Al acabar cerramos la conexión
+      con.end();
+    }
+  }
+
+  static async getSingle(id) {
+    const con = await createDBConection();
+    try {
+      const [result] = await con.query("SELECT * FROM users WHERE id = ?", [
+        UUIDParser.UUIDToBin(id),
+      ]);
+
+      // Si no sacamos resultados, enviamos un error
+      if (result.length == 0) {
+        return { success: false, error: "No existe ese usuario" };
+      }
+
+      // Nos quedamos con el unico resultado
+      const data = result.map((row) => ({
+        ...row,
+        id: UUIDParser.binToUUID(row.id), // Cambiamos el uuid a string
+      }))[0];
+
+      // Le quitamos el campo de la contraseña
+      delete data.passwd;
+
+      return { success: true, data };
+    } finally {
+      con.end();
+    }
+  }
+
+  static async updateData(data, id) {
+    // Declaramos los campos que pueden variar sin problema
+    const commonFields = [
+      "username",
+      "surname",
+      "birthdate",
+      "email",
+      "department",
+      "description",
+      "rol",
+    ];
+
+    // Variables para crear la sentencia SQL
+    const sets = [];
+    const values = [];
+
+    // Bucle para iterar los campos a actualizar
+    for (const field of commonFields) {
+      // Si el campo contiene algo lo guardamos para actualizar
+      // if (data[field]) {
+      sets.push(`${field} = ?`);
+      values.push(data[field]);
+      // }
+    }
+
+    // Guardamos el estado de la cuenta
+    sets.push("active = ?");
+    values.push(data.active ? 1 : 0);
+
+    // Si existe el campo contraseña y no está vacio
+    if (data.passwd && data.passwd.trim() !== "") {
+      // Guardamos la contraseña hasheada
+      sets.push("passwd = ?");
+      values.push(bcrypt.hashSync(data.passwd, Number(SALT)));
+    }
+
+    const sql = `UPDATE users SET ${sets.join(", ")} WHERE id = ?`;
+    values.push(UUIDParser.UUIDToBin(id));
+
+    // Creamos la conexion a la DB
+    const con = await createDBConection();
+    try {
+      const resultado = await con.execute(sql, values);
+
+      return { success: true, resultado };
+    } catch (e) {
+      console.log(e);
+      return { success: false, error: e };
+    } finally {
+      con.end();
     }
   }
 }

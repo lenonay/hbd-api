@@ -27,6 +27,7 @@ export async function createDBConection() {
     user: DB_USER,
     password: DB_PASSWD,
     database: DB,
+    dateStrings: true
   });
 }
 

@@ -1,9 +1,11 @@
 import crypto from "node:crypto";
+import bcrypt from "bcrypt";
 
 import { JWT } from "../../jwt/jwt.js";
 import { AccountMySQL } from "../../models/accountMySQL.js";
 import { AccountValidator } from "../../validators/accountValidator.js";
 import { UUIDParser } from "../../utils/uuidParser.js";
+import { SALT } from "../../config.js";
 
 export class AccountController {
   static async login(req, res) {
@@ -54,7 +56,6 @@ export class AccountController {
   static async create(req, res) {
     // Validamos el contenido
     const validate = AccountValidator.validateFull(req.body);
-    
 
     // Si tiene errores delvolvemos el estado
     if (!validate.success) {
@@ -90,15 +91,62 @@ export class AccountController {
       username,
       surname,
       email,
-      passwd,
+      bcrypt.hashSync(passwd, Number(SALT)),
       department,
       description,
       rol,
-      birthdate
+      birthdate,
     ];
     // 3. Lo metemos en la base de datos.
     const validation = await AccountMySQL.createAccount(params);
 
     res.send(validation);
+  }
+
+  static async getAll(req, res) {
+    // Recuperamos todos los registros
+    const results = await AccountMySQL.getAll();
+
+    res.json(results);
+  }
+
+  static async getSingle(req, res) {
+    const { id } = req.params;
+
+    // Verificamos que el uuid sea valido
+    if (!id || !UUIDParser.validateUUID(id)) {
+      // Si no lo es, salimos
+      res.status(400).json({ success: false, error: "UUID no es válido" });
+      return;
+    }
+
+    const result = await AccountMySQL.getSingle(id);
+
+    res.json(result);
+  }
+
+  static async updateSingle(req, res) {
+    const { id } = req.params;
+
+    // 1. Verificamos que el uuid sea valido
+    if (!id || !UUIDParser.validateUUID(id)) {
+      // Si no lo es, salimos
+      res.status(400).json({ success: false, error: "UUID no es válido" });
+      return;
+    }
+
+    // 2. Validamos los datos recibidos
+    const validate = AccountValidator.validateUpdate(req.body);
+
+    // Si los datos no son válidos enviamos
+    if (!validate.success) {
+      res.json({ success: validate.success, error: validate.errors[0] });
+      return;
+    }
+
+    // 3. Actualizamos el recurso
+    const dbUpdate = await AccountMySQL.updateData(req.body, id);
+
+    res.json(dbUpdate);
   }
 }
