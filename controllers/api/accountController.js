@@ -104,8 +104,11 @@ export class AccountController {
   }
 
   static async getAll(req, res) {
-    // Recuperamos todos los registros
-    const results = await AccountMySQL.getAll();
+    // Sacamos el filtro de la query
+    const { filter } = req.query;
+
+    // Recuperamos todos los registros o filtrados segun nos llegue la petición
+    const results = filter ? await AccountMySQL.getFiltered(filter) : await AccountMySQL.getAll();
 
     res.json(results);
   }
@@ -148,5 +151,22 @@ export class AccountController {
     const dbUpdate = await AccountMySQL.updateData(req.body, id);
 
     res.json(dbUpdate);
+  }
+
+  static async deleteSingle(req, res) {
+    const { id } = req.params;
+
+    // 1. Verificamos que el uuid sea valido
+    if (!id || !UUIDParser.validateUUID(id)) {
+      // Si no lo es, salimos
+      res.status(400).json({ success: false, error: "UUID no es válido" });
+      return;
+    }
+
+    // Borramos el usuario de la DB
+    const dbResult = await AccountMySQL.deleteAccount(id);
+
+    // Enviamos el resultado de la operacion
+    res.json(dbResult);
   }
 }

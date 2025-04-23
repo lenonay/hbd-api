@@ -83,9 +83,8 @@ export class AccountMySQL {
   static async getAll() {
     const con = await createDBConection();
     try {
-      // const [results] = await con.query("SELECT * FROM users");
       const [[deptsRows], [userRows]] = await Promise.all([
-        con.query("SELECT DISTINCT department FROM users"),
+        con.query("SELECT department FROM departments ORDER BY department"),
         con.query(
           "SELECT id, username, surname, email, department, description ,rol, active FROM users ORDER BY username, surname, email"
         ),
@@ -104,6 +103,45 @@ export class AccountMySQL {
       return { depts, data };
     } finally {
       // Al acabar cerramos la conexión
+      con.end();
+    }
+  }
+
+  static async getFiltered(filter) {
+    // Creamos la conexión de la DB
+    const con = await createDBConection();
+
+    try {
+      // Creamos el SQL
+      const sql = `
+        SELECT id, username, surname, email, department, description ,rol, active
+        FROM users
+        WHERE MATCH(username,surname,email,rol,department)
+              AGAINST(? IN BOOLEAN MODE)
+        ORDER BY MATCH(username,surname,email,rol,department)
+                AGAINST(? IN BOOLEAN MODE) DESC
+        LIMIT 50;
+      `;
+
+      const [[deptsRows], [usersRows]] = await Promise.all([
+        con.query("SELECT department FROM departments ORDER BY department"),
+        con.query(sql, [filter, filter]),
+      ]);
+
+      // Extraemos todos los departamentos unicos
+      const depts = deptsRows.map((row) => row.department).sort();
+
+      // Extraemos los datos de los usuarios
+      const data = usersRows.map((row) => ({
+        ...row,
+        id: UUIDParser.binToUUID(row.id),
+        active: row.active === 1 ? true : false, // Cambiamos el valor binario a booleano
+      }));
+
+      return { depts, data };
+    } catch (e) {
+      return { status: "error", e };
+    } finally {
       con.end();
     }
   }
@@ -184,6 +222,26 @@ export class AccountMySQL {
       console.log(e);
       return { success: false, error: e };
     } finally {
+      con.end();
+    }
+  }
+
+  static async deleteAccount(id) {
+    // Creamos la conexión a la DB
+    const con = await createDBConection();
+    // Intentamos borrar la cuenta
+    try {
+      const result = await con.execute("DELETE FROM users WHERE id = ?", [
+        UUIDParser.UUIDToBin(id),
+      ]);
+
+      // Devolvemos estado true si fue bien
+      return { success: true };
+    } catch (error) {
+      // Si hubo un error lo retornamos
+      return { success: false, error: error };
+    } finally {
+      // Cerramos la conexion
       con.end();
     }
   }

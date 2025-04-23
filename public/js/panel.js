@@ -69,18 +69,34 @@ async function HandleUsers() {
   upperMenu
     .querySelector(".add_user_btn")
     .addEventListener("click", HandleCreateUser);
+
+  upperMenu
+    .querySelector("#search_inp")
+    .addEventListener("input", async (event) => {
+      const filter = event.target.value;
+
+      await GenerateAccountTable(viewer, filter);
+    });
 }
 
-async function GenerateAccountTable(viewer) {
+async function GenerateAccountTable(viewer, filter = "") {
   viewer.classList.add("loading");
   viewer.innerHTML = "<div class='loader'></div>";
 
-  const usersData = await GetUsersData();
+  const usersData = await GetUsersData(filter);
 
   viewer.innerHTML = "";
   viewer.classList.remove("loading");
 
-  usersData.depts.forEach((dept) => {
+  for (const dept of usersData.depts) {
+    // Filtramos los datos de las cuentas que tengan este departamento
+    const accountData = usersData.data.filter(
+      (account) => account.department === dept
+    );
+
+    // Si no hay saltamos a la siguiente
+    if (accountData.length == 0) continue;
+
     const container = document.createElement("div");
     container.className = "dept_container";
 
@@ -96,19 +112,17 @@ async function GenerateAccountTable(viewer) {
         <th>Apellidos</th>
         <th>Email</th>
         <th colspan="2">Descripción</th>
-        <th>Acciones</th>
+        <th actions>Acciones</th>
       </tr>
     `;
 
     // Filas de datos
-    usersData.data
-      .filter((account) => account.department === dept)
-      .forEach((account) => {
-        const row = document.createElement("tr");
-        row.setAttribute("d_active", account.active);
-        row.setAttribute("d_id", account.id);
+    accountData.forEach((account) => {
+      const row = document.createElement("tr");
+      row.setAttribute("d_active", account.active);
+      row.setAttribute("d_id", account.id);
 
-        row.innerHTML = `
+      row.innerHTML = `
           <td><div class="user_info">${
             account.rol !== "user"
               ? icons.crown(25) + `<span>${account.username}</span>`
@@ -127,8 +141,8 @@ async function GenerateAccountTable(viewer) {
           </td>
         `;
 
-        tbody.appendChild(row);
-      });
+      tbody.appendChild(row);
+    });
 
     // Event listeners
     thead.addEventListener("click", () => {
@@ -139,11 +153,47 @@ async function GenerateAccountTable(viewer) {
       .querySelectorAll(".edit_btn")
       .forEach((btn) => btn.addEventListener("click", HandleUpdateUser));
 
+    tbody
+      .querySelectorAll(".del_btn")
+      .forEach((btn) => btn.addEventListener("click", HandleDeleteUser));
+
     table.appendChild(thead);
     table.appendChild(tbody);
     container.appendChild(table);
     viewer.appendChild(container);
-  });
+  }
+}
+
+function HandleDeleteUser(event) {
+  const id = event.target.closest("tr").getAttribute("d_id");
+
+  const DeleteUser = async () => {
+    // Transformamos la alerta en un cargador
+    MutateAlertToLoader("Eliminando usuario");
+
+    // Hacemos la peticion de borrado
+    const req = await fetch(`${apiURL}/account/${id}`, { method: "DELETE" });
+
+    // Procesamos la respuesta
+    const res = req.ok ? await req.json() : null;
+
+    // Cerramos la alerta
+    CloseDisplays({ error: false, display: false, alert: true });
+
+    // Si salio mal mostramos un error y salimos
+    if (!res.success) {
+      ShowError(res.error);
+      return;
+    }
+
+    // Recargamos
+    HandleUsers();
+  };
+
+  CreateAlert(
+    "Esta acción no se puede deshacer, ¿quiere continuar?",
+    DeleteUser
+  );
 }
 
 async function HandleUpdateUser(event) {
@@ -269,10 +319,13 @@ async function GetUserData(id) {
   return res;
 }
 
-async function GetUsersData() {
-  const req = await fetch(`${apiURL}/account/all`);
+async function GetUsersData(filter) {
+  const req = await fetch(`${apiURL}/account/all?filter=${filter}`);
 
   const res = req.ok ? await req.json() : null;
+
+  // Guardamos los departamentos en la sesion
+  Session.setDepts(res.depts);
 
   return res;
 }
@@ -315,6 +368,10 @@ function CreateDisplayHTML(title, data = {}, options = {}) {
 
   const submitText = id ? "Guardar" : "Crear";
 
+  const capitalizeFirstLetter = (val) => {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
+
   const isAdmin = rol === "admin";
   const isActive = Boolean(active);
 
@@ -323,6 +380,13 @@ function CreateDisplayHTML(title, data = {}, options = {}) {
     : "";
 
   const passwdBlock = blockPasswd ? "disabled" : "";
+
+  let deptsOptions = "";
+  Session.getDetps().forEach((dept) => {
+    deptsOptions += `<option value="${dept}" ${
+      department == dept ? "selected" : ""
+    } >${capitalizeFirstLetter(dept)}</option>`;
+  });
 
   return `
     <h2>${title}</h2>
@@ -350,7 +414,9 @@ function CreateDisplayHTML(title, data = {}, options = {}) {
       </label>
       <label class="department">
         <span>Departamento</span>
-        <input type="text" id="department_inp" name="department" placeholder="..." value="${department}" />
+        <select id="department_inp" name="department">
+          ${deptsOptions}
+        </select>
       </label>
       <label class="description">
         <span>Descripción</span>
@@ -466,6 +532,21 @@ async function HandleLogout() {
   window.location = "/admin";
 }
 
+// Manejo de información de la sesion
+class Session {
+  static setDepts(depts) {
+    // 1. Metemos el array de los departamentos en memoria
+    window.sessionStorage.setItem("depts", JSON.stringify({ depts }));
+  }
+
+  static getDetps() {
+    // 2. Recuperamos el
+    const { depts } = JSON.parse(window.sessionStorage.getItem("depts"));
+
+    return depts;
+  }
+}
+
 // LIMPIAR Y PRERPARAR VISTA
 function PrepareView(button, view) {
   // 1. Marcamos el boton
@@ -487,29 +568,88 @@ function MarkAsSelected(button) {
 }
 
 // ERRORES Y DISPLAYS
+function CreateBack(callback = CloseDisplays()) {
+  // Creamos el back
+  const back = document.createElement("div");
+  back.className = "back";
+
+  mainView.append(back);
+  // Añadimos el evento para cerrar
+  back.addEventListener("click", callback);
+}
+
 function CreateDisplay(customClass) {
   // Antes de crearlo hay que eliminar el anterior
   CloseDisplays({ error: false, alert: false, display: true });
 
+  // Creamos el fondo
+  CreateBack(CloseDisplays);
+
   // Creamos el display
   const display = document.createElement("div");
   display.className = "display";
-
-  // Creamos el back
-  const back = document.createElement("div");
-  back.className = "back";
 
   // Si hay una clase extra la añadimos
   if (customClass) display.classList.add(customClass);
 
   // Añadimos el display
   mainView.append(display);
-  mainView.append(back);
-
-  // Añadimos el evento para cerrar
-  back.addEventListener("click", CloseDisplays);
 
   return display;
+}
+
+function CreateAlert(text, confirmEvent, options = {}) {
+  const { disableConfirm = false } = options;
+
+  // Creamos una abreviación
+  const CloseDisplaysFn = () => {
+    CloseDisplays({ error: false, alert: true, display: false });
+  };
+
+  // Cerramos las alertas previas
+  CloseDisplaysFn();
+  // Creamos el fondo para que solo cierre la alerta
+  CreateBack(CloseDisplaysFn);
+
+  // Creamos la alerta
+  const alert = document.createElement("div");
+  alert.className = "alert";
+
+  alert.innerHTML = `
+    <h3>¡Atención!</h3>
+    <p>${text}</p>
+    <div class="buttons">
+      ${
+        // Si esta desactivado no se muestra el boton
+        disableConfirm
+          ? ""
+          : '<button class="confirm_btn" type="button">Confirmar</button>'
+      }
+      <button class="cancel_btn" type="button">Cancelar</button>
+    </div>
+  `;
+
+  mainView.append(alert);
+
+  // Eventos
+  if (confirmEvent) {
+    alert.querySelector(".confirm_btn").addEventListener("click", confirmEvent);
+  }
+
+  alert.querySelector(".cancel_btn").addEventListener("click", CloseDisplaysFn);
+}
+
+function MutateAlertToLoader(title = "Cargando") {
+  const alert = document.querySelector(".alert");
+
+  // Cambiamos el contenido a un loader
+  alert.innerHTML = `
+    <h3 class="loading">${title}</h3>
+    <p>Por favor, espere.</p>
+    <div class="loader"></div>
+  `;
+
+  return alert;
 }
 
 function ShowError(error) {

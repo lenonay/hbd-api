@@ -35,7 +35,7 @@ const AccountSchemaFull = z
   .object({
     id: z.string().uuid({ message: "Se requiere un UUID válido" }).optional(),
     username: requiredString("El nombre", 2),
-    surname: requiredString("Los apellidos", 5),
+    surname: requiredString("Los apellidos", 2),
     email: requiredString("El email").email({
       message: "El email no es válido",
     }),
@@ -74,7 +74,7 @@ const AccountSchemaUpdate = z
   .object({
     id: z.string().uuid({ message: "Se requiere un UUID válido" }).optional(),
     username: requiredString("El nombre", 2),
-    surname: requiredString("Los apellidos", 5),
+    surname: requiredString("Los apellidos", 2),
     email: requiredString("El email").email({
       message: "El email no es válido",
     }),

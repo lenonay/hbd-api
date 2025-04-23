@@ -208,9 +208,13 @@ main.users {
           text-transform: uppercase;
           cursor: pointer;
 
+          & tr:first-of-type > th {
+            text-shadow: 0 0 5px var(--shadow-p);
+          }
+
           & .column_headers {
             font-size: 16px;
-            
+
             &.hidden {
               display: none;
             }
@@ -323,7 +327,8 @@ main.users {
       }
 
       & > input,
-      & > textarea {
+      & > textarea,
+      & > select {
         background: var(--bg);
         padding: 5px 10px;
         border-radius: 8px 8px 2px 2px;
@@ -356,7 +361,7 @@ main.users {
         justify-content: center;
         align-items: center;
 
-        & > input[type=checkbox] {
+        & > input[type="checkbox"] {
           accent-color: var(--primary-shade-20);
         }
       }
@@ -418,6 +423,60 @@ main.users {
 
 .alert {
   z-index: 12;
+  padding: 10px;
+  background: var(--primary-tint-40);
+  border-radius: 15px;
+  box-shadow: 0 0 10px 1px var(--neutral-300);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  max-width: 250px;
+
+  & h3 {
+    color: var(--alert);
+    font-size: 20px;
+
+    &.loading {
+      padding-inline: 10px;
+      color: black;
+    }
+  }
+
+  & p {
+    font-size: 18px;
+    max-width: 60%;
+    text-align: center;
+  }
+
+  & .buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+
+    & button {
+      font-size: 17px;
+      padding: 5px 10px;
+      background: var(--primary-shade-20);
+      border-radius: 10px;
+      box-shadow: 0 0 10px 1px var(--shadow-b);
+
+      &.cancel_btn {
+        background: var(--primary-tint-20);
+
+        &:hover {
+          background: var(--primary-tint-40);
+        }
+      }
+
+      &:hover {
+        background-color: var(--primary);
+        box-shadow: 0 0 10px 1px var(--shadow-p);
+      }
+    }
+  }
 }
 
 .error {
