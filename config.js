@@ -13,6 +13,7 @@ export const {
   DB_USER,
   DB_PASSWD,
   DB,
+  DBWP,
   USERNAME,
   USER_SURNAME,
   USER_EMAIL,

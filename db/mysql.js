@@ -10,6 +10,7 @@ import {
   DB_PASSWD,
   DB_PORT,
   DB_USER,
+  DBWP,
   SALT,
   USER_BIRTHDATE,
   USER_DEPT,
@@ -27,6 +28,17 @@ export async function createDBConection() {
     user: DB_USER,
     password: DB_PASSWD,
     database: DB,
+    dateStrings: true
+  });
+}
+
+export async function createDBWPConnection (){
+  return await mysql.createConnection({
+    host: DB_HOST,
+    port: DB_PORT,
+    user: DB_USER,
+    password: DB_PASSWD,
+    database: DBWP,
     dateStrings: true
   });
 }

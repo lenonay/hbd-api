@@ -6,6 +6,7 @@ import { AccountMySQL } from "../../models/accountMySQL.js";
 import { AccountValidator } from "../../validators/accountValidator.js";
 import { UUIDParser } from "../../utils/uuidParser.js";
 import { SALT } from "../../config.js";
+import { logginMySQL } from "../../models/logginMySQL.js";
 
 export class AccountController {
   static async login(req, res) {
@@ -29,6 +30,13 @@ export class AccountController {
       res.status(200).json(checkAccount);
       return;
     }
+
+    // Guardamos un registro de los inicios de sesion
+    logginMySQL.Login({
+      ip: req.headers['x-real-ip'],
+      device: req.headers['user-agent'],
+      user_id: checkAccount.data.id
+    })
 
     // Creamos el jwt
     const token = JWT.create(checkAccount.data);
