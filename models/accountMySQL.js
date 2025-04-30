@@ -24,14 +24,14 @@ export class AccountMySQL {
     // Nos quedamos con la información
     const userDBData = userResult[0];
 
-    // Verificamos que la cuenta esté activa
-    if (userDBData.active !== 1) {
-      return { success: false, error: "La cuenta está inactiva" };
-    }
-
     // Comprobamos la constraseña
     if (!bcrypt.compareSync(passwd, userDBData.passwd)) {
       return { success: false, error: "Credenciales inválidas" };
+    }
+
+    // Verificamos que la cuenta esté activa
+    if (userDBData.active !== 1) {
+      return { success: false, error: "La cuenta está inactiva" };
     }
 
     // Eliminamos la contraseña hasheada de la información que se enviará al usuario
@@ -242,6 +242,45 @@ export class AccountMySQL {
       return { success: false, error: error };
     } finally {
       // Cerramos la conexion
+      con.end();
+    }
+  }
+
+  static async updatePasswd(id, currentPasswd, newPasswd) {
+    // Creamos la conexiçon con la base de datos
+    const con = await createDBConection();
+
+    try {
+      // 1. Sacamos el hash de la cuenta asociada al ID
+      const [userData] = await con.query(
+        "SELECT passwd FROM users WHERE id = ?",
+        UUIDParser.UUIDToBin(id)
+      );
+
+      if (userData.length == 0) {
+        return { success: false, error: "La cuenta no existe" };
+      }
+
+      // 2. Verificamos la contraseña actual
+      // Nos quedamos con la contraseña actual
+      const dbPasswd = userData[0].passwd;
+
+      // Verificamos que la contraseña actual sea correcta
+      if (!bcrypt.compareSync(currentPasswd, dbPasswd)) {
+        return { success: false, error: "Credenciales inválidas" };
+      }
+
+      // 3. Actualizamos a la nueva contraseña
+      const [query] = await con.execute(
+        "UPDATE users SET passwd = ? WHERE id = ?",
+        [bcrypt.hashSync(newPasswd, Number(SALT)), UUIDParser.UUIDToBin(id)]
+      );
+
+      return { success: true };
+    } catch (e) {
+      console.log(e);
+      return { success: false, error: "Ha ocurrido un error" };
+    } finally {
       con.end();
     }
   }

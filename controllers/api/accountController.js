@@ -33,10 +33,10 @@ export class AccountController {
 
     // Guardamos un registro de los inicios de sesion
     logginMySQL.Login({
-      ip: req.headers['x-real-ip'],
-      device: req.headers['user-agent'],
-      user_id: checkAccount.data.id
-    })
+      ip: req.headers["x-real-ip"],
+      device: req.headers["user-agent"],
+      user_id: checkAccount.data.id,
+    });
 
     // Creamos el jwt
     const token = JWT.create(checkAccount.data);
@@ -116,7 +116,9 @@ export class AccountController {
     const { filter } = req.query;
 
     // Recuperamos todos los registros o filtrados segun nos llegue la petición
-    const results = filter ? await AccountMySQL.getFiltered(filter) : await AccountMySQL.getAll();
+    const results = filter
+      ? await AccountMySQL.getFiltered(filter)
+      : await AccountMySQL.getAll();
 
     res.json(results);
   }
@@ -176,5 +178,34 @@ export class AccountController {
 
     // Enviamos el resultado de la operacion
     res.json(dbResult);
+  }
+
+  static async updateSelf(req, res) {
+    // Sacamos el id de la sesion
+    const { id } = req.session;
+
+    // Extraemos los campos de
+    const { currentPasswd, newPasswd } = req.body;
+
+    // Si no recibimos los campos devolvemos 400
+    if (!currentPasswd || !newPasswd) {
+      res.status(400).json({ success: false });
+    }
+
+    // Validamos la nueva contraseña
+    const validate = AccountValidator.validtePasswd(newPasswd);
+
+    // Si no es válida mandamos el error
+    if (!validate.success) {
+      res.json(validate);
+    }
+
+    const dbWork = await AccountMySQL.updatePasswd(
+      id,
+      currentPasswd,
+      newPasswd
+    );
+
+    res.send(dbWork);
   }
 }

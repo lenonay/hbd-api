@@ -152,4 +152,27 @@ export class AccountValidator {
 
     return { success: true };
   }
+
+  static validtePasswd(passwd) {
+    // Declaramos las regex
+    const numbers = /[0-9]/;
+    const uppercase = /[A-Z]/;
+    const lowercase = /[a-z]/;
+
+    if (passwd.length < 8) {
+      return { success: false, error: "Debe tener 8 caracteres" };
+    }
+
+    if (!numbers.test(passwd)) {
+      return { success: false, error: "Debe contener un número" };
+    }
+    if (!uppercase.test(passwd)) {
+      return { success: false, error: "Debe contener una mayúscula" };
+    }
+    if (!lowercase.test(passwd)) {
+      return { success: false, error: "Debe contener una minúscula" };
+    }
+
+    return { success: true };
+  }
 }

@@ -1,13 +1,18 @@
 import { Router } from "express";
 
 import { AccountController } from "../../controllers/api/accountController.js";
-import { adminAuth } from "../../middlewares/auhtorization.js";
+import { adminAuth, authorization } from "../../middlewares/auhtorization.js";
 
 export const AccountRouter = Router();
 
 // Inicio de sesión
 AccountRouter.post("/login", AccountController.login)
 AccountRouter.delete("/logout", AccountController.logout);
+
+// Cambio de contraseña
+// Protegemos bajo el uso de la sesión
+AccountRouter.use(authorization);
+AccountRouter.patch("/", AccountController.updateSelf);
 
 
 AccountRouter.use(adminAuth)
