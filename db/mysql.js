@@ -21,7 +21,7 @@ import {
   USERNAME,
 } from "../config.js";
 
-export async function createDBConection() {
+export async function createDBConnection() {
   return await mysql.createConnection({
     host: DB_HOST,
     port: DB_PORT,
@@ -45,7 +45,7 @@ export async function createDBWPConnection (){
 
 export async function InitDB() {
   // Obtenemos una conección
-  const con = await createDBConection();
+  const con = await createDBConnection();
 
   // Consultamos la tabla de usuarios
   const [result] = await con.query("SELECT * FROM users");

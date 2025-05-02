@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 
-import { createDBConection } from "../db/mysql.js";
+import { createDBConnection } from "../db/mysql.js";
 import { UUIDParser } from "../utils/uuidParser.js";
 
 import { SALT } from "../config.js";
@@ -8,7 +8,7 @@ import { SALT } from "../config.js";
 export class AccountMySQL {
   static async getAccountData(email, passwd) {
     // Nos conectamos a la DB
-    const con = await createDBConection();
+    const con = await createDBConnection();
 
     // Buscamos los datos del usuario en la DB
     const [userResult] = await con.query(
@@ -46,7 +46,7 @@ export class AccountMySQL {
 
   static async verifyEmail(email) {
     // 1. Obtenemos la conexión
-    const con = await createDBConection();
+    const con = await createDBConnection();
     // 2. Hacemos la consulta
     const [query] = await con.query("SELECT * FROM users WHERE email = ?", [
       email,
@@ -65,7 +65,7 @@ export class AccountMySQL {
 
   static async createAccount(params) {
     // 1. Creamos la conexión
-    const con = await createDBConection();
+    const con = await createDBConnection();
     // 2. Intentamos meter la cuenta
     try {
       con.execute(
@@ -81,7 +81,7 @@ export class AccountMySQL {
   }
 
   static async getAll() {
-    const con = await createDBConection();
+    const con = await createDBConnection();
     try {
       const [[deptsRows], [userRows]] = await Promise.all([
         con.query("SELECT department FROM departments ORDER BY department"),
@@ -109,7 +109,7 @@ export class AccountMySQL {
 
   static async getFiltered(filter) {
     // Creamos la conexión de la DB
-    const con = await createDBConection();
+    const con = await createDBConnection();
 
     try {
       // Creamos el SQL
@@ -147,7 +147,7 @@ export class AccountMySQL {
   }
 
   static async getSingle(id) {
-    const con = await createDBConection();
+    const con = await createDBConnection();
     try {
       const [result] = await con.query("SELECT * FROM users WHERE id = ?", [
         UUIDParser.UUIDToBin(id),
@@ -213,7 +213,7 @@ export class AccountMySQL {
     values.push(UUIDParser.UUIDToBin(id));
 
     // Creamos la conexion a la DB
-    const con = await createDBConection();
+    const con = await createDBConnection();
     try {
       const resultado = await con.execute(sql, values);
 
@@ -228,7 +228,7 @@ export class AccountMySQL {
 
   static async deleteAccount(id) {
     // Creamos la conexión a la DB
-    const con = await createDBConection();
+    const con = await createDBConnection();
     // Intentamos borrar la cuenta
     try {
       const result = await con.execute("DELETE FROM users WHERE id = ?", [
@@ -248,7 +248,7 @@ export class AccountMySQL {
 
   static async updatePasswd(id, currentPasswd, newPasswd) {
     // Creamos la conexiçon con la base de datos
-    const con = await createDBConection();
+    const con = await createDBConnection();
 
     try {
       // 1. Sacamos el hash de la cuenta asociada al ID

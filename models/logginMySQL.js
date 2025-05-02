@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-import { createDBConection } from "../db/mysql.js";
+import { createDBConnection } from "../db/mysql.js";
 import { UUIDParser } from "../utils/uuidParser.js";
 
 export class logginMySQL {
@@ -11,7 +11,7 @@ export class logginMySQL {
     // Generamos el uuid
     const id = UUIDParser.UUIDToBin(crypto.randomUUID());
 
-    const con = await createDBConection();
+    const con = await createDBConnection();
 
     try {
       // Lanzamos y nos olvidamos
