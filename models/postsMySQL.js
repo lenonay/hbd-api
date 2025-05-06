@@ -4,6 +4,7 @@ import * as cheerio from "cheerio";
 import { convert } from "html-to-text";
 
 import { categoryQuery } from "./querySQL.js";
+import { parsePost } from "../utils/postParse.js";
 
 export class PostsMySQL {
   static async all() {
@@ -19,84 +20,7 @@ export class PostsMySQL {
 
       if (posts.length === 0) return [];
 
-      const imgUrlsSet = new Set();
-      posts.forEach((post) => {
-        const $ = cheerio.load(post.post_content);
-        $("img").each((_, el) => {
-          const src = $(el).attr("src");
-          if (src) imgUrlsSet.add(src);
-        });
-      });
-      const imgUrls = Array.from(imgUrlsSet);
-
-      let attachments = [];
-      if (imgUrls.length > 0) {
-        const placeholders = imgUrls.map(() => "?").join(",");
-        const likeClauses = imgUrls
-          .map(() => `pm.meta_value LIKE CONCAT('%', ?, '%')`)
-          .join(" OR ");
-        [attachments] = await con.query(
-          `
-          SELECT
-            p.ID AS attachment_id,
-            p.guid AS original_url,
-            pm.meta_value AS serialized_meta
-          FROM wp_posts p
-          JOIN wp_postmeta pm
-            ON pm.post_id = p.ID
-           AND pm.meta_key = '_wp_attachment_metadata'
-          WHERE p.post_type = 'attachment'
-            AND (
-              p.guid IN (${placeholders})
-              OR ${likeClauses}
-            );
-          `,
-          [...imgUrls, ...imgUrls]
-        );
-      }
-
-      const urlToAttachment = {};
-      attachments.forEach((att) => {
-        const meta = unserialize(att.serialized_meta);
-        const baseUrl = att.original_url.replace(/\/[^\/]+$/, "/");
-
-        const fullFile = att.original_url.split("/").pop();
-        urlToAttachment[att.original_url] = {
-          id: att.attachment_id,
-          url: att.original_url,
-          sizes: {
-            full: {
-              file: fullFile,
-              width: meta.width,
-              height: meta.height,
-              url: att.original_url,
-            },
-          },
-        };
-
-        if (meta.sizes) {
-          Object.entries(meta.sizes).forEach(([sizeName, info]) => {
-            const sizeUrl = baseUrl + info.file;
-            urlToAttachment[sizeUrl] = urlToAttachment[sizeUrl] || {
-              id: att.attachment_id,
-              url: att.original_url,
-              sizes: {},
-            };
-            urlToAttachment[sizeUrl].sizes[sizeName] = {
-              file: info.file,
-              width: info.width,
-              height: info.height,
-              url: sizeUrl,
-            };
-            urlToAttachment[sizeUrl].sizes.full = {
-              file: fullFile,
-              width: meta.width,
-              height: meta.height,
-              url: att.original_url,
-            };
-          });
-        }
-      });
+      const cleanedPost = posts.map((post) => parsePost(post));
 
       const postIds = posts.map((p) => p.ID);
       const catPlaceholders = postIds.map(() => "?").join(",");
@@ -128,28 +52,10 @@ export class PostsMySQL {
           .push({ id: r.term_id, name: r.name, slug: r.slug });
       });
 
-      return posts.map((post) => {
-        const $ = cheerio.load(post.post_content);
-        const attachments = [];
-
-        $("img").each((_, el) => {
-          const src = $(el).attr("src");
-          if (src && urlToAttachment[src]) {
-            attachments.push(urlToAttachment[src]);
-          }
-          $(el).remove();
-        });
-
-        const cleanedHTML = $.html();
-        const text = convert(cleanedHTML, { wordwrap: false });
-
+      return cleanedPost.map((post) => {
         return {
-          id: post.ID,
-          date: post.post_date,
-          title: post.post_title,
-          content: text.trim(),
-          attachments,
-          categories: postCategories.get(post.ID) || [],
+          ...post,
+          categories: postCategories.get(post.id) || [],
         };
       });
     } finally {
@@ -164,109 +70,7 @@ export class PostsMySQL {
 
       if (posts.length === 0) return [];
 
-      // El resto del código es idéntico al método all()
-      const imgUrlsSet = new Set();
-      posts.forEach((post) => {
-        const $ = cheerio.load(post.post_content);
-        $("img").each((_, el) => {
-          const src = $(el).attr("src");
-          if (src) imgUrlsSet.add(src);
-        });
-      });
-      const imgUrls = Array.from(imgUrlsSet);
-
-      let attachments = [];
-      if (imgUrls.length > 0) {
-        const placeholders = imgUrls.map(() => "?").join(",");
-        const likeClauses = imgUrls
-          .map(() => `pm.meta_value LIKE CONCAT('%', ?, '%')`)
-          .join(" OR ");
-        [attachments] = await con.query(
-          `
-          SELECT
-            p.ID AS attachment_id,
-            p.guid AS original_url,
-            pm.meta_value AS serialized_meta
-          FROM wp_posts p
-          JOIN wp_postmeta pm
-            ON pm.post_id = p.ID
-           AND pm.meta_key = '_wp_attachment_metadata'
-          WHERE p.post_type = 'attachment'
-            AND (
-              p.guid IN (${placeholders})
-              OR ${likeClauses}
-            );
-          `,
-          [...imgUrls, ...imgUrls]
-        );
-      }
-
-      const urlToAttachment = {};
-      attachments.forEach((att) => {
-        const meta = unserialize(att.serialized_meta);
-        const baseUrl = att.original_url.replace(/\/[^\/]+$/, "/");
-
-        const fullFile = att.original_url.split("/").pop();
-        urlToAttachment[att.original_url] = {
-          id: att.attachment_id,
-          url: att.original_url,
-          sizes: {
-            full: {
-              file: fullFile,
-              width: meta.width,
-              height: meta.height,
-              url: att.original_url,
-            },
-          },
-        };
-
-        if (meta.sizes) {
-          Object.entries(meta.sizes).forEach(([sizeName, info]) => {
-            const sizeUrl = baseUrl + info.file;
-            urlToAttachment[sizeUrl] = urlToAttachment[sizeUrl] || {
-              id: att.attachment_id,
-              url: att.original_url,
-              sizes: {},
-            };
-            urlToAttachment[sizeUrl].sizes[sizeName] = {
-              file: info.file,
-              width: info.width,
-              height: info.height,
-              url: sizeUrl,
-            };
-            urlToAttachment[sizeUrl].sizes.full = {
-              file: fullFile,
-              width: meta.width,
-              height: meta.height,
-              url: att.original_url,
-            };
-          });
-        }
-      });
-
-      return posts.map((post) => {
-        const $ = cheerio.load(post.post_content);
-        const attachments = [];
-
-        $("img").each((_, el) => {
-          const src = $(el).attr("src");
-          if (src && urlToAttachment[src]) {
-            attachments.push(urlToAttachment[src]);
-          }
-          $(el).remove();
-        });
-
-        const cleanedHTML = $.html();
-        const text = convert(cleanedHTML, { wordwrap: false });
-
-        return {
-          id: post.ID,
-          date: post.post_date,
-          title: post.post_title,
-          content: text.trim(),
-          attachments,
-        };
-      });
+      return posts.map((post) => parsePost(posts));
     } finally {
       await con.end();
     }
