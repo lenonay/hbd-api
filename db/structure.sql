@@ -46,7 +46,7 @@ CREATE TABLE logins (
   ip VARCHAR(20) NOT NULL,
   device VARCHAR(255) NOT NULL,
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
-  CONSTRAINT fk_user_login FOREIGN KEY (user_id) REFERENCES users (id)
+  CONSTRAINT fk_user_login FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 /* Popular la Base de Datos */
