@@ -70,7 +70,7 @@ export class PostsMySQL {
 
       if (posts.length === 0) return [];
 
-      return posts.map((post) => parsePost(posts));
+      return posts.map((post) => parsePost(post));
     } finally {
       await con.end();
     }

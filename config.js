@@ -8,6 +8,7 @@ export const {
   MAIN_URI,
   WP_API,
   SALT,
+  VERSION,
   DB_HOST,
   DB_PORT,
   DB_USER,

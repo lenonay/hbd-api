@@ -7,11 +7,24 @@ import { AccountValidator } from "../../validators/accountValidator.js";
 import { UUIDParser } from "../../utils/uuidParser.js";
 import { SALT } from "../../config.js";
 import { logginMySQL } from "../../models/logginMySQL.js";
+import { validateAppVersion } from "../../validators/versionValidator.js";
 
 export class AccountController {
   static async login(req, res) {
     // Validamos el cuerpo de la petición antes de procesarlo
     const validate = AccountValidator.validate(req.body);
+
+    // Si viene versión en la peticion la validamos
+    if(validate.version != "-1") {
+      const version = validateAppVersion(validate.version);
+
+      // Si el cliente tiene una version menor sacamos
+      if(!version.success) {
+        res.send(version);
+        return;
+      }
+    }
+
 
     // Si no cumple con los requisitos enviamos un error y un 400
     if (!validate.success) {
