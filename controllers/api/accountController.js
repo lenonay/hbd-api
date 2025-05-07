@@ -15,18 +15,17 @@ export class AccountController {
     const validate = AccountValidator.validate(req.body);
 
     // Si viene versión en la peticion la validamos
-    if(validate.version != "-1") {
+    if (validate.version != "-1") {
       const version = validateAppVersion(validate.version);
 
       // Si el cliente tiene una version menor sacamos
-      if(!version.success) {
+      if (!version.success) {
         res.send(version);
         return;
       }
     }
 
-
-    // Si no cumple con los requisitos enviamos un error y un 400
+    // Si no cumple con los requisitos enviamos un error
     if (!validate.success) {
       res.status(200).json({ success: false, error: validate.errors[0] });
       return;
@@ -45,27 +44,32 @@ export class AccountController {
     }
 
     // Guardamos un registro de los inicios de sesion
-    logginMySQL.Login({
+    const loginData = {
       ip: req.headers["x-real-ip"],
       device: req.headers["user-agent"],
-      user_id: checkAccount.data.id,
-    });
+      id: crypto.randomUUID(),
+      randomString: crypto.randomBytes(100).toString("hex"),
+      userID: checkAccount.data.id
+    };
 
     // Creamos el jwt
-    const token = JWT.create(checkAccount.data);
+    const token = JWT.create(checkAccount.data, loginData);
+
+    // Guardamos el login en la base de datos
+    await logginMySQL.Login(loginData, token.refreshSecret);
 
     // Asignamos el token dentro de una cookie y ademas lo enviamos en el cuerpo
     res
-      .cookie("token", token, {
+      .cookie("token", token.token, {
         httpOnly: true,
         secure: true,
         path: "/",
-        maxAge: 1000 * 60 * 60 * 2, // 1 hora
+        maxAge: 1000 * 60 * 60 * 24 * 2, // 2 días
       })
       .json({
         success: true,
         data: checkAccount.data,
-        token,
+        refres: token.refreshSecret,
       });
   }
 
