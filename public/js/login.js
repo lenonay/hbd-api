@@ -6,7 +6,7 @@ const inpPasswd = $("#inp_passwd");
 const loginButton = $(".login_button");
 const errorDisplay = $(".error_display");
 // Dominio
-const apiURL = "https://tmp.virtucan.es/api";
+const apiURL = window.location.origin + "/api";
 
 //// Eventos
 loginButton.addEventListener("click", HandleLogin);

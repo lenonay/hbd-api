@@ -8,7 +8,7 @@ const logsBtn = $(".logs_btn");
 const accountSettingsBtn = $(".account_settings_btn");
 const logoutBtn = $(".logout_btn");
 // Dominio
-const apiURL = "https://tmp.virtucan.es/api";
+const apiURL = window.location.origin + "/api";
 // SVG
 const icons = {
   addUser: (x = 40) => {
