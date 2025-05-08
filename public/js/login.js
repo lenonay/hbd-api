@@ -43,7 +43,7 @@ async function HandleLogin() {
   sessionStorage.setItem("userdata", res.data);
 
   // 5. Reenviar al panel o mostrar error
-  if (res.data.rol !== "admin") {
+  if (res.data.rol !== "admin" && res.data.rol !== "duke") {
     ShowError("No tienes permiso para acceder al panel de administración");
     return;
   }

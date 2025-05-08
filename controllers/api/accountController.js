@@ -49,7 +49,7 @@ export class AccountController {
       device: req.headers["user-agent"],
       id: crypto.randomUUID(),
       randomString: crypto.randomBytes(100).toString("hex"),
-      userID: checkAccount.data.id
+      userID: checkAccount.data.id,
     };
 
     // Creamos el jwt
@@ -64,12 +64,11 @@ export class AccountController {
         httpOnly: true,
         secure: true,
         path: "/",
-        maxAge: 1000 * 60 * 60 * 24 * 2, // 2 días
+        maxAge: 1000 * 60 * 60 * 24 * 14, // 14 días
       })
       .json({
         success: true,
         data: checkAccount.data,
-        refres: token.refreshSecret,
       });
   }
 
@@ -157,6 +156,9 @@ export class AccountController {
 
   static async updateSingle(req, res) {
     const { id } = req.params;
+    const { rol } = req.session; // Extraemos el rol
+
+    const isDuke = rol === "duke";
 
     // 1. Verificamos que el uuid sea valido
     if (!id || !UUIDParser.validateUUID(id)) {
@@ -175,13 +177,16 @@ export class AccountController {
     }
 
     // 3. Actualizamos el recurso
-    const dbUpdate = await AccountMySQL.updateData(req.body, id);
+    const dbUpdate = await AccountMySQL.updateData(req.body, id, {
+      duke: isDuke,
+    });
 
     res.json(dbUpdate);
   }
 
   static async deleteSingle(req, res) {
     const { id } = req.params;
+    const { rol } = req.session; // Extraemos el rol de la sesion
 
     // 1. Verificamos que el uuid sea valido
     if (!id || !UUIDParser.validateUUID(id)) {
@@ -190,8 +195,10 @@ export class AccountController {
       return;
     }
 
+    const isDuke = rol === "duke";
+
     // Borramos el usuario de la DB
-    const dbResult = await AccountMySQL.deleteAccount(id);
+    const dbResult = await AccountMySQL.deleteAccount(id, { duke: isDuke });
 
     // Enviamos el resultado de la operacion
     res.json(dbResult);

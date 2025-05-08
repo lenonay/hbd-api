@@ -26,6 +26,9 @@ const icons = {
   crown: (x = 40) => {
     return `<svg width="${x}px" height="${x}px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 19L18 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M16.5585 16H7.44152C6.58066 16 5.81638 15.4491 5.54415 14.6325L3.70711 9.12132C3.44617 8.3385 4.26195 7.63098 5 8L5.71067 8.35533C6.48064 8.74032 7.41059 8.58941 8.01931 7.98069L10.5858 5.41421C11.3668 4.63317 12.6332 4.63316 13.4142 5.41421L15.9807 7.98069C16.5894 8.58941 17.5194 8.74032 18.2893 8.35533L19 8C19.7381 7.63098 20.5538 8.3385 20.2929 9.12132L18.4558 14.6325C18.1836 15.4491 17.4193 16 16.5585 16Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path> </g></svg>`;
   },
+  dukeCrown: (x = 40) => {
+    return `<svg class="duke" width="${x}px" height="${x}px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 19L18 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M16.5585 16H7.44152C6.58066 16 5.81638 15.4491 5.54415 14.6325L3.70711 9.12132C3.44617 8.3385 4.26195 7.63098 5 8L5.71067 8.35533C6.48064 8.74032 7.41059 8.58941 8.01931 7.98069L10.5858 5.41421C11.3668 4.63317 12.6332 4.63316 13.4142 5.41421L15.9807 7.98069C16.5894 8.58941 17.5194 8.74032 18.2893 8.35533L19 8C19.7381 7.63098 20.5538 8.3385 20.2929 9.12132L18.4558 14.6325C18.1836 15.4491 17.4193 16 16.5585 16Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path> </g></svg>`;
+  },
   delUser: (x = 40) => {
     return `<svg width="${x}px" height="${x}px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M3 19C3.69137 16.6928 5.46998 16 9.5 16C13.53 16 15.3086 16.6928 16 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path> <path d="M13 9.5C13 11.433 11.433 13 9.5 13C7.567 13 6 11.433 6 9.5C6 7.567 7.567 6 9.5 6C11.433 6 13 7.567 13 9.5Z" stroke="currentColor" stroke-width="2"></path> <path d="M16 3L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M21 3L16 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>`;
   },
@@ -122,12 +125,24 @@ async function GenerateAccountTable(viewer, filter = "") {
       row.setAttribute("d_active", account.active);
       row.setAttribute("d_id", account.id);
 
+      let result; // Inicializamos
+
+      switch (account.rol) {
+        case "duke":
+          result = icons.dukeCrown(25) + `<span>${account.username}</span>`;
+          break;
+
+        case "admin":
+          result = icons.crown(25) + `<span>${account.username}</span>`;
+          break;
+
+        default:
+          result = `<span>${account.username}</span>`;
+          break;
+      }
+
       row.innerHTML = `
-          <td><div class="user_info">${
-            account.rol !== "user"
-              ? icons.crown(25) + `<span>${account.username}</span>`
-              : account.username
-          }</div></td>
+          <td><div class="user_info">${result}</div></td>
           <td>${account.surname}</td>
           <td>${account.email}</td>
           <td colspan="2">${account.description || "..."}</td>
@@ -280,7 +295,7 @@ async function SubmitUpdateForm(event) {
 
   if (!res || !res.success) {
     // Mostramos los errores en el formulario
-    ShowFormError(res.error);
+    ShowFormError({ error: res.error });
     return;
   }
 
@@ -370,7 +385,7 @@ function CreateDisplayHTML(title, data = {}, options = {}) {
 
   const capitalizeFirstLetter = (val) => {
     return String(val).charAt(0).toUpperCase() + String(val).slice(1);
-}
+  };
 
   const isAdmin = rol === "admin";
   const isActive = Boolean(active);

@@ -8,8 +8,10 @@ adminRouter.use("/public", express.static("./public"));
 
 adminRouter.get("/", (req, res) => {
   if (req.session) {
-    if (req.session.rol == "admin") res.redirect("/admin/panel");
-    return;
+    if (req.session.rol == "admin" || req.session.rol == "duke") {
+      res.redirect("/admin/panel");
+      return;
+    }
   }
 
   res.sendFile("login.html", { root: "./views" });
@@ -19,5 +21,7 @@ adminRouter.get("/", (req, res) => {
 adminRouter.use(adminAuth);
 
 adminRouter.get("/panel", (req, res) => {
+  console.log("Acceso al panel");
+
   res.sendFile("panel.html", { root: "./views" });
 });

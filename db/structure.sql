@@ -4,6 +4,8 @@ CREATE DATABASE api
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_spanish_ci;
 
+GRANT ALL PRIVILEGES ON api.* TO 'wp_user'@'%';
+
 USE api;
 
 CREATE TABLE departments (

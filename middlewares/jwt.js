@@ -58,7 +58,7 @@ export async function jwt(req, res, next) {
       httpOnly: true,
       secure: true,
       path: "/",
-      maxAge: 1000 * 60 * 60 * 24 * 2, // 2 días
+      maxAge: 1000 * 60 * 60 * 24 * 14, // 2 días
     });
   }
 
@@ -67,8 +67,8 @@ export async function jwt(req, res, next) {
 }
 
 function skipRecreate(exp) {
-  const duration = 1000 * 60 * 60 * 24 * 2; // 2 días
-  const threshold = (duration * 0.75).toFixed(0); // Limite del 75%
+  const duration = 1000 * 60 * 60 * 24 * 14; // 14 días
+  const threshold = (duration * 0.40).toFixed(0); // Limite del 40%
 
   // 1. Sacamos el tiempo actual en ms
   const time = Date.now();

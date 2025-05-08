@@ -28,18 +28,18 @@ export async function createDBConnection() {
     user: DB_USER,
     password: DB_PASSWD,
     database: DB,
-    dateStrings: true
+    dateStrings: true,
   });
 }
 
-export async function createDBWPConnection (){
+export async function createDBWPConnection() {
   return await mysql.createConnection({
     host: DB_HOST,
     port: DB_PORT,
     user: DB_USER,
     password: DB_PASSWD,
     database: DBWP,
-    dateStrings: true
+    dateStrings: true,
   });
 }
 
@@ -67,10 +67,14 @@ export async function InitDB() {
       bcrypt.hashSync(USER_PASSWD, Number(SALT)),
       USER_DEPT,
       USER_DESCRIPTION,
-      "admin",
-      USER_BIRTHDATE
+      "duke",
+      USER_BIRTHDATE,
     ]
   );
 
+  // Mostramos aviso de que se ha creado
   console.log("[+] Default API user created");
+  console.log(
+    `Credentials:\n\tEmail: ${USER_EMAIL},\n\tPassword: ${USER_PASSWD}`
+  );
 }

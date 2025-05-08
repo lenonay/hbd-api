@@ -8,5 +8,3 @@ WpPostsRouter.get("/", WpPostsController.getAll);
 WpPostsRouter.get("/news", WpPostsController.getNews);
 
 WpPostsRouter.get("/info", WpPostsController.getInfo);
-
-WpPostsRouter.get("/:id", WpPostsController.getPostInfo);

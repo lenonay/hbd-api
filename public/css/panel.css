@@ -241,6 +241,10 @@ main.users {
 
             & svg {
               color: var(--secondary-strong);
+
+              &.duke {
+                color: #813d9c;;
+              }
             }
           }
 

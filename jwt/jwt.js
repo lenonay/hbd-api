@@ -18,7 +18,7 @@ export class JWT {
 
     // 3. Creamos el token de refresh
     const refreshToken = jwt.sign(refreshPayload, refreshSecret, {
-      expiresIn: "2 days",
+      expiresIn: "14 days",
     });
 
     const tokenPayload = {
@@ -27,7 +27,7 @@ export class JWT {
       refresh: refreshToken,
     };
 
-    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "2 days" });
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "14 days" });
 
     return { token, refreshSecret };
   }

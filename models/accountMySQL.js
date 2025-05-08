@@ -173,7 +173,7 @@ export class AccountMySQL {
     }
   }
 
-  static async updateData(data, id) {
+  static async updateData(data, id, { duke = false } = {}) {
     // Declaramos los campos que pueden variar sin problema
     const commonFields = [
       "username",
@@ -189,13 +189,37 @@ export class AccountMySQL {
     const sets = [];
     const values = [];
 
-    // Bucle para iterar los campos a actualizar
-    for (const field of commonFields) {
-      // Si el campo contiene algo lo guardamos para actualizar
-      // if (data[field]) {
-      sets.push(`${field} = ?`);
-      values.push(data[field]);
-      // }
+    // Creamos la conexion a la DB
+    const con = await createDBConnection();
+
+    try {
+      const [query] = await con.query("SELECT id,rol FROM users WHERE id = ?", [
+        UUIDParser.UUIDToBin(id),
+      ]);
+
+      if (query.length == 0) {
+        return { success: false, error: "La cuenta no existe" };
+      }
+
+      if (query[0].rol === "duke" && !duke) {
+        return {
+          success: false,
+          error: "No tienes permiso para modificar esta cuenta.",
+        };
+      }
+
+      // Bucle para iterar los campos a actualizar
+      for (const field of commonFields) {
+        // Si el campo contiene algo lo guardamos para actualizar
+        if (query[0].rol === "duke" && field === "rol") {
+          // Si el campo es rol y el usario es duke no lo incluimos en el cambio
+          continue;
+        }
+        sets.push(`${field} = ?`);
+        values.push(data[field]);
+      }
+    } catch {
+      return { success: false, error: "Ha ocurrido un error al actualizar" };
     }
 
     // Guardamos el estado de la cuenta
@@ -212,12 +236,14 @@ export class AccountMySQL {
     const sql = `UPDATE users SET ${sets.join(", ")} WHERE id = ?`;
     values.push(UUIDParser.UUIDToBin(id));
 
-    // Creamos la conexion a la DB
-    const con = await createDBConnection();
     try {
-      const resultado = await con.execute(sql, values);
+      const [resultado] = await con.execute(sql, values);
 
-      return { success: true, resultado };
+      if (resultado.affectedRows < 1) {
+        return { success: false, error: "No se ha podido modificar la cuenta" };
+      }
+
+      return { success: true };
     } catch (e) {
       console.log(e);
       return { success: false, error: e };
@@ -226,20 +252,47 @@ export class AccountMySQL {
     }
   }
 
-  static async deleteAccount(id) {
+  static async deleteAccount(id, { duke = false } = {}) {
     // Creamos la conexión a la DB
     const con = await createDBConnection();
     // Intentamos borrar la cuenta
     try {
-      const result = await con.execute("DELETE FROM users WHERE id = ?", [
+      // 1. Extraemos el rol de la cuenta a eliminar
+      const [query] = await con.execute(
+        "SELECT id,rol FROM users WHERE id = ?",
+        [UUIDParser.UUIDToBin(id)]
+      );
+
+      // 2. Si no hay resultados salimos
+      if (query.length == 0) {
+        return { success: false, error: "Esa cuenta no existe" };
+      }
+
+      // 3. Si no somos duques y la cuenta si, impedir borrado
+      if (!duke && query[0].rol == "duke") {
+        return {
+          success: false,
+          error: "No tienes permiso para borrar esta cuenta",
+        };
+      }
+
+      const [result] = await con.execute("DELETE FROM users WHERE id = ?", [
         UUIDParser.UUIDToBin(id),
       ]);
+
+      if (result.affectedRows == 0) {
+        return { success: false, error: "No se ha podido eliminar la cuenta" };
+      }
 
       // Devolvemos estado true si fue bien
       return { success: true };
     } catch (error) {
       // Si hubo un error lo retornamos
-      return { success: false, error: error };
+      console.log(error);
+      return {
+        success: false,
+        error: "No se pudo eliminar la cuenta con id" + id,
+      };
     } finally {
       // Cerramos la conexion
       con.end();
